@@ -1,0 +1,75 @@
+@startuml
+title Dental Booking System - UML Profile
+
+' --- Configuration for Profile Look ---
+skinparam monochrome true
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 20
+skinparam ranksep 50
+
+' Define stereotypes with icons
+hide circle
+skinparam class {
+    BackgroundColor White
+    ArrowColor Black
+    BorderColor Black
+}
+
+' --- Elements Hierarchy ---
+package "Dental Booking Profile" <<Profile>> {
+
+    package "Infrastructure" {
+        class "Reservation System" as System <<Component>>
+        class "Database" as DB <<Database>>
+    }
+
+    package "Constraints" {
+        class "User must provide name, telephone,\nemail, password" as C1 <<Constraint>>
+        class "User can only book ONE session\nwith preferred dentist" as C2 <<Constraint>>
+        class "List includes dentist name,\nexperience, expertise" as C3 <<Constraint>>
+        class "Admin can manage all bookings" as C4 <<Constraint>>
+    }
+
+    package "Actors" {
+        class User <<Actor>>
+        class Admin <<Actor>>
+    }
+
+    package "Use Cases" {
+        class Register <<Use Case>>
+        class Login <<Use Case>>
+        class Logout <<Use Case>>
+        class "View Dentist List" as ViewD <<Use Case>>
+        class "Book Appointment" as Book <<Use Case>>
+        class "View Booking" as ViewB <<Use Case>>
+        class "Edit Booking" as EditB <<Use Case>>
+        class "Delete Booking" as DelB <<Use Case>>
+        
+        class "View All Bookings" as ViewAll <<Use Case>>
+        class "Edit Any Booking" as EditAny <<Use Case>>
+        class "Delete Any Booking" as DelAny <<Use Case>>
+    }
+}
+
+' --- Connections (Matching the requested style) ---
+User -- Register
+User -- Login
+User -- Logout
+User -- ViewD
+User -- Book
+User -- ViewB
+User -- EditB
+User -- DelB
+
+Admin -- ViewAll
+Admin -- EditAny
+Admin -- DelAny
+
+' Define that all these relate to the System
+System .. Register
+System .. Login
+System .. Book
+System .. ViewAll
+
+@enduml

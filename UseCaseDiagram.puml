@@ -1,0 +1,32 @@
+@startuml
+left to right direction
+actor "Registered User" as User
+actor Admin
+
+rectangle "Booking System" {
+  User --> (Register)
+  User --> (Login)
+  User --> (Logout)
+  User --> (Book Session)
+  User --> (View Booking)
+  User --> (Edit Booking)
+  User --> (Delete Booking)
+
+  Admin --> (View Any Booking)
+  Admin --> (Edit Any Booking)
+  Admin --> (Delete Any Booking)
+}
+
+note right of User
+- specify name, telephone, email, password to register
+- login with email/password
+- book one session specifying date and preferred dentist
+  (dentist list with name, experience, expertise)
+- view/edit/delete own booking
+end note
+
+note right of Admin
+- manage any bookings
+end note
+
+@enduml

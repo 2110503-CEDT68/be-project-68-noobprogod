@@ -1,0 +1,85 @@
+@startuml
+title Dental Booking System - Complete Sequence Diagrams
+
+== User Registration ==
+autonumber
+actor User
+participant "Booking System" as System
+database Database
+
+User -> System: Register (name, telephone, email, password)
+System -> Database: Store user details
+Database --> System: Success
+System --> User: Registration Confirmation
+
+== User Login ==
+autonumber
+User -> System: Login (email, password)
+System -> Database: Verify credentials
+Database --> System: Authentication Success/Failure
+System --> User: Login Response
+
+== View Dentist List ==
+autonumber
+User -> System: Request dentist list
+System -> Database: Fetch all dentists
+Database --> System: Return dentists (name, experience, expertise)
+System --> User: Display dentist list
+
+== Book Appointment ==
+autonumber
+User -> System: Book Appointment (date, dentist_id)
+System -> Database: Check availability
+Database --> System: Available/Not Available
+alt Appointment Available
+  System -> Database: Create appointment
+  Database --> System: Success
+  System --> User: Booking Confirmation
+else Appointment Not Available
+  System --> User: Booking Failure
+end
+
+== View Own Booking ==
+autonumber
+User -> System: View my booking
+System -> Database: Fetch user appointments
+Database --> System: Return appointment details
+System --> User: Display appointment
+
+== Edit Own Booking ==
+autonumber
+User -> System: Edit Booking (reservation_id, new_date, new_dentist)
+System -> Database: Update appointment details
+Database --> System: Update confirmation
+System --> User: Edit Success/Failure
+
+== Cancel Own Booking ==
+autonumber
+User -> System: Delete Booking (reservation_id)
+System -> Database: Remove appointment
+Database --> System: Deletion confirmation
+System --> User: Cancellation Confirmation
+
+== Admin View All Bookings ==
+autonumber
+actor Admin
+Admin -> System: View all bookings
+System -> Database: Fetch all appointments
+Database --> System: Return all appointment details
+System --> Admin: Display all bookings
+
+== Admin Edit Any Booking ==
+autonumber
+Admin -> System: Edit Booking (reservation_id, new details)
+System -> Database: Update appointment
+Database --> System: Update confirmation
+System --> Admin: Edit Success/Failure
+
+== Admin Delete Any Booking ==
+autonumber
+Admin -> System: Delete Booking (reservation_id)
+System -> Database: Remove appointment
+Database --> System: Deletion confirmation
+System --> Admin: Delete Success/Failure
+
+@enduml
