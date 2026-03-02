@@ -33,4 +33,3 @@ DentistSchema.virtual('appointments', {
 });
 
 module.exports = mongoose.model('Dentist', DentistSchema);
-
