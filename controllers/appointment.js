@@ -12,19 +12,19 @@ exports.getAppointments = async (req, res, next) => {
         // regular user: only own booking
         query = Appointment.find({ user: req.user.id }).populate({
             path: 'dentist',
-            select: 'name yearsExperience expertise'
+            select: 'name yearsOfExperience expertise'
         });
     } else {
         // admin can view all or filter by dentist via nested route
         if (req.params.dentistId) {
             query = Appointment.find({ dentist: req.params.dentistId }).populate({
                 path: 'dentist',
-                select: 'name yearsExperience expertise'
+                select: 'name yearsOfExperience expertise'
             });
         } else {
             query = Appointment.find().populate({
                 path: 'dentist',
-                select: 'name yearsExperience expertise'
+                select: 'name yearsOfExperience expertise'
             });
         }
     }
@@ -53,7 +53,7 @@ exports.getAppointment = async (req, res, next) => {
     try {
         const appointment = await Appointment.findById(req.params.id).populate({
             path: 'dentist',
-            select: 'name yearsExperience expertise'
+            select: 'name yearsOfExperience expertise'
         });
 
         if (!appointment) {
