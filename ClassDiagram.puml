@@ -1,75 +1,74 @@
 @startuml
-title Dental Booking System - UML Profile
+title Dental Booking System - API Profile (Class Diagram)
 
-' --- Configuration for Profile Look ---
-skinparam monochrome true
+' --- Style Configuration ---
+skinparam monochrome false
 skinparam shadowing false
 skinparam packageStyle rectangle
-skinparam nodesep 20
-skinparam ranksep 50
-
-' Define stereotypes with icons
-hide circle
 skinparam class {
     BackgroundColor White
-    ArrowColor Black
-    BorderColor Black
+    ArrowColor #666666
+    BorderColor #999999
+}
+hide circle
+
+' --- API Service Profile ---
+package "Dental Booking Service" <<Profile>> {
+
+    class "Dental Service" as Service <<Application>> #FFF2CC {
+    }
+
+    ' --- Dentists Resource ---
+    class "Dentists" as DentistsResource <<Resource>> #E2EFDA {
+        <<GET>> + getDentists(): Dentist[]
+    }
+
+    ' --- Appointments Resource ---
+    class "Appointments" as BookingsResource <<Resource>> #E2EFDA {
+        <<GET>> + getBookings(): Booking[]
+        <<POST>> + createBooking(): Booking
+    }
+
+    class "Appointment" as BookingResource <<Resource>> #E2EFDA {
+        <<GET>> + getBooking(): Booking
+        <<PUT>> + updateBooking(): Booking
+        <<DELETE>> + deleteBooking(): void
+    }
+
+    ' --- Representations (Data Models) ---
+    class "Dentist" as DentistModel <<Representation>> #E2EFDA {
+        - name: String
+        - yearsOfExperience: Integer
+        - areaOfExpertise: String
+    }
+
+    class "Booking" as BookingModel <<Representation>> #E2EFDA {
+        - _id: ObjectId
+        - user: Ref(User)
+        - dentist: Ref(Dentist)
+        - date: Date
+        - createdAt: Date
+    }
+
 }
 
-' --- Elements Hierarchy ---
-package "Dental Booking Profile" <<Profile>> {
+' --- Relationships (RESTful Path) ---
+Service -right-> DentistsResource : /dentists\n<<Path>>
+Service -down-> BookingsResource : /bookings\n<<Path>>
 
-    package "Infrastructure" {
-        class "Reservation System" as System <<Component>>
-        class "Database" as DB <<Database>>
-    }
+BookingsResource -right-> BookingResource : /{bookingId}\n<<Path>>
 
-    package "Constraints" {
-        class "User must provide name, telephone,\nemail, password" as C1 <<Constraint>>
-        class "User can only book ONE session\nwith preferred dentist" as C2 <<Constraint>>
-        class "List includes dentist name,\nexperience, expertise" as C3 <<Constraint>>
-        class "Admin can manage all bookings" as C4 <<Constraint>>
-    }
+' --- Data Usage ---
+DentistsResource ..> DentistModel : <<use>>
+BookingsResource ..> BookingModel : <<use>>
+BookingResource ..> BookingModel : <<use>>
 
-    package "Actors" {
-        class User <<Actor>>
-        class Admin <<Actor>>
-    }
-
-    package "Use Cases" {
-        class Register <<Use Case>>
-        class Login <<Use Case>>
-        class Logout <<Use Case>>
-        class "View Dentist List" as ViewD <<Use Case>>
-        class "Book Appointment" as Book <<Use Case>>
-        class "View Booking" as ViewB <<Use Case>>
-        class "Edit Booking" as EditB <<Use Case>>
-        class "Delete Booking" as DelB <<Use Case>>
-        
-        class "View All Bookings" as ViewAll <<Use Case>>
-        class "Edit Any Booking" as EditAny <<Use Case>>
-        class "Delete Any Booking" as DelAny <<Use Case>>
-    }
-}
-
-' --- Connections (Matching the requested style) ---
-User -- Register
-User -- Login
-User -- Logout
-User -- ViewD
-User -- Book
-User -- ViewB
-User -- EditB
-User -- DelB
-
-Admin -- ViewAll
-Admin -- EditAny
-Admin -- DelAny
-
-' Define that all these relate to the System
-System .. Register
-System .. Login
-System .. Book
-System .. ViewAll
+' --- Extra Credit Ideas (Logic Constraints) ---
+note bottom of BookingModel
+  **Extra Credit Logic:**
+  * One session per user
+  * Booking date must be in future
+  * Status: [pending, completed]
+end note
 
 @enduml

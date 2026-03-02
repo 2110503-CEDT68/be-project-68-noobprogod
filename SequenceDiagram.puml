@@ -1,0 +1,205 @@
+@startuml
+title Dental Booking System - Complete Sequence Diagrams
+
+== User Registration ==
+autonumber
+actor User
+participant server
+participant router
+participant controller
+participant model
+database Database
+
+User -> server: POST /api/v1/auth/register {name, telephone, email, password}
+server -> router: forward to auth route
+router -> controller: register(req.body)
+controller -> model: User.create(req.body)
+model -> Database: insert document
+Database --> model: user
+model --> controller: user
+controller --> server: res.json(user)
+server --> User: 201 Created + user
+
+== User Login ==
+autonumber
+actor User
+participant server
+participant router
+participant controller
+participant model
+database Database
+
+User -> server: POST /api/v1/auth/login {email,password}
+server -> router: auth route
+router -> controller: login(req.body)
+controller -> model: User.findOne({email}).select(+password)
+model -> Database: query user
+Database --> model: user
+model --> controller: user
+controller -> model: user.matchPassword(password)
+model --> controller: bool
+controller --> server: res.json(token)
+server --> User: 200 OK + token
+
+== View Dentist List ==
+autonumber
+actor User
+participant server
+participant router
+participant controller
+participant model
+database Database
+
+User -> server: GET /api/v1/dentists
+server -> router: dentists route
+router -> controller: getDentists()
+controller -> model: Dentist.find()
+model -> Database: query
+Database --> model: dentists
+model --> controller: dentists
+controller --> server: res.json(dentists)
+server --> User: 200 OK + list
+
+== Book Appointment ==
+autonumber
+actor User
+participant server
+participant router
+participant controller
+participant modelApp as AppointmentModel
+participant modelUser as UserModel
+participant modelDent as DentistModel
+database Database
+
+User -> server: POST /api/v1/appointments {date,dentist}
+server -> router: appointments route
+router -> controller: bookSession(req.body, userId)
+controller -> modelApp: findOne({user:userId})
+modelApp -> Database: query
+Database --> modelApp: existing
+alt no existing
+  controller -> modelApp: create({apptDate:..., user:userId, dentist})
+  modelApp -> Database: insert
+  Database --> modelApp: appointment
+  modelApp --> controller: appointment
+  controller --> server: res.json(appointment)
+else existing
+  controller --> server: res.status(400).json({message:"already booked"})
+end
+server --> User: response
+
+== View Own Booking ==
+autonumber
+actor User
+participant server
+participant router
+participant controller
+participant modelApp
+database Database
+
+User -> server: GET /api/v1/appointments/me
+server -> router: appointments route
+router -> controller: getMyBooking(userId)
+controller -> modelApp: find({user:userId})
+modelApp -> Database: query
+Database --> modelApp: appointments
+modelApp --> controller: appointments
+controller --> server: res.json(appointments)
+server --> User: 200 OK + data
+
+== Edit Own Booking ==
+autonumber
+actor User
+participant server
+participant router
+participant controller
+participant modelApp
+database Database
+
+User -> server: PUT /api/v1/appointments/:id {date,dentist}
+server -> router: appointments route
+router -> controller: updateBooking(id, req.body)
+controller -> modelApp: findByIdAndUpdate(id, req.body)
+modelApp -> Database: update
+Database --> modelApp: updated
+modelApp --> controller: updated
+controller --> server: res.json(updated)
+server --> User: 200 OK
+
+== Cancel Own Booking ==
+autonumber
+actor User
+participant server
+participant router
+participant controller
+participant modelApp
+database Database
+
+User -> server: DELETE /api/v1/appointments/:id
+server -> router: appointments route
+router -> controller: deleteBooking(id)
+controller -> modelApp: findByIdAndDelete(id)
+modelApp -> Database: delete
+Database --> modelApp: result
+modelApp --> controller: result
+controller --> server: res.json({})
+server --> User: 200 OK
+
+== Admin View All Bookings ==
+autonumber
+actor Admin
+participant server
+participant router
+participant controller
+participant modelApp
+database Database
+
+Admin -> server: GET /api/v1/appointments
+server -> router: appointments route
+router -> controller: getAllBookings()
+controller -> modelApp: find()
+modelApp -> Database: query
+Database --> modelApp: appointments
+modelApp --> controller: appointments
+controller --> server: res.json(appointments)
+server --> Admin: 200 OK
+
+== Admin Edit Any Booking ==
+autonumber
+actor Admin
+participant server
+participant router
+participant controller
+participant modelApp
+database Database
+
+Admin -> server: PUT /api/v1/appointments/:id {date,dentist}
+server -> router: appointments route
+router -> controller: updateBooking(id, req.body)
+controller -> modelApp: findByIdAndUpdate(id, req.body)
+modelApp -> Database: update
+Database --> modelApp: updated
+modelApp --> controller: updated
+controller --> server: res.json(updated)
+server --> Admin: 200 OK
+
+== Admin Delete Any Booking ==
+autonumber
+actor Admin
+participant server
+participant router
+participant controller
+participant modelApp
+database Database
+
+Admin -> server: DELETE /api/v1/appointments/:id
+server -> router: appointments route
+router -> controller: deleteBooking(id)
+controller -> modelApp: findByIdAndDelete(id)
+modelApp -> Database: delete
+Database --> modelApp: result
+modelApp --> controller: result
+controller --> server: res.json({})
+server --> Admin: 200 OK
+
+@enduml
