@@ -18,6 +18,12 @@ const DentistSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please add an area of expertise'],
         trim: true
+    },
+    bookingLimitPerDay: {
+        type: Number,
+        required: false,
+        default: null,
+        min: [1, 'Booking limit must be at least 1']
     }
 }, {
     toJSON: {virtuals: true},

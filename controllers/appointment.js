@@ -1,6 +1,38 @@
 const Appointment = require('../models/Appointment');
 const Dentist = require('../models/Dentist');
 
+/**
+ * Validate appointment date
+ * - Cannot be more than 2 weeks in advance
+ * - Must be within business hours 09:00-17:00 (Thailand time)
+ */
+function validateAppointmentDate(apptDate) {
+    const appointmentDate = new Date(apptDate);
+    const now = new Date();
+    
+    // Check if date is in the past
+    if (appointmentDate < now) {
+        return { error: 'Appointment date cannot be in the past' };
+    }
+    
+    // Check if date is more than 2 weeks in advance
+    const twoWeeksFromNow = new Date(now);
+    twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
+    if (appointmentDate > twoWeeksFromNow) {
+        return { error: 'Cannot book more than 2 weeks in advance' };
+    }
+    
+    // Check business hours 09:00-17:00 (Thailand time, UTC+7)
+    const thailandDate = new Date(appointmentDate.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+    const hour = thailandDate.getHours();
+    
+    if (hour < 9 || hour >= 17) {
+        return { error: 'Appointments can only be booked between 09:00 and 17:00 (Thailand time)' };
+    }
+    
+    return { error: null };
+}
+
 
 //@desc Get all appointments 
 //@route GET /api/v1/appointments
@@ -101,6 +133,46 @@ exports.addAppointment = async (req, res, next) => {
             }
         }
 
+        // Validate appointment date
+        const { error: validationError } = validateAppointmentDate(req.body.apptDate);
+        if (validationError) {
+            return res.status(400).json({
+                success: false,
+                message: validationError
+            });
+        }
+
+        // Check if dentist already has an appointment at the same time
+        const conflictingAppt = await Appointment.findOne({
+            dentist: req.params.dentistId,
+            apptDate: req.body.apptDate
+        });
+        if (conflictingAppt) {
+            return res.status(400).json({
+                success: false,
+                message: 'This dentist already has an appointment at that time'
+            });
+        }
+
+        // Check booking limit per day if set
+        if (dentist.bookingLimitPerDay) {
+            const appointmentDate = new Date(req.body.apptDate);
+            const dayStart = new Date(appointmentDate.getFullYear(), appointmentDate.getMonth(), appointmentDate.getDate());
+            const dayEnd = new Date(appointmentDate.getFullYear(), appointmentDate.getMonth(), appointmentDate.getDate() + 1);
+            
+            const bookingsOnDay = await Appointment.countDocuments({
+                dentist: req.params.dentistId,
+                apptDate: { $gte: dayStart, $lt: dayEnd }
+            });
+            
+            if (bookingsOnDay >= dentist.bookingLimitPerDay) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Dentist has reached the booking limit of ${dentist.bookingLimitPerDay} for this day`
+                });
+            }
+        }
+
         const appointment = await Appointment.create(req.body);
         res.status(201).json({ success: true, data: appointment });
     } catch (err) {
@@ -135,6 +207,51 @@ exports.updateAppointment = async (req, res, next) => {
                 success: false,
                 message: `User ${req.user.id} not authorized to update this appointment`
             });
+        }
+
+        // Validate appointment date if being updated
+        if (req.body.apptDate) {
+            const { error: validationError } = validateAppointmentDate(req.body.apptDate);
+            if (validationError) {
+                return res.status(400).json({
+                    success: false,
+                    message: validationError
+                });
+            }
+
+            // Check if dentist already has an appointment at the new time (excluding current appointment)
+            const conflictingAppt = await Appointment.findOne({
+                _id: { $ne: req.params.id },
+                dentist: appointment.dentist,
+                apptDate: req.body.apptDate
+            });
+            if (conflictingAppt) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'This dentist already has an appointment at that time'
+                });
+            }
+
+            // Check booking limit per day if set
+            const dentist = await Dentist.findById(appointment.dentist);
+            if (dentist && dentist.bookingLimitPerDay) {
+                const appointmentDate = new Date(req.body.apptDate);
+                const dayStart = new Date(appointmentDate.getFullYear(), appointmentDate.getMonth(), appointmentDate.getDate());
+                const dayEnd = new Date(appointmentDate.getFullYear(), appointmentDate.getMonth(), appointmentDate.getDate() + 1);
+                
+                const bookingsOnDay = await Appointment.countDocuments({
+                    _id: { $ne: req.params.id },
+                    dentist: appointment.dentist,
+                    apptDate: { $gte: dayStart, $lt: dayEnd }
+                });
+                
+                if (bookingsOnDay >= dentist.bookingLimitPerDay) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Dentist has reached the booking limit of ${dentist.bookingLimitPerDay} for this day`
+                    });
+                }
+            }
         }
 
         appointment = await Appointment.findByIdAndUpdate(
