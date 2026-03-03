@@ -109,6 +109,11 @@ exports.getAppointment = async (req, res, next) => {
 //@route POST /api/v1/dentists/:dentistId/appointments
 //@access Private
 exports.addAppointment = async (req, res, next) => {
+    let { apptDate } = req.body;
+    // Client may send ISO string without milliseconds (e.g. "2024-06-30T10:00:00Z"), but Mongoose expects milliseconds (e.g. "2024-06-30T10:00:00.000Z")
+    if (apptDate && apptDate.endsWith('Z') && !apptDate.includes('.')) {
+        req.body.apptDate = apptDate.replace(/(\d{3}Z)$/, ".$1");
+    }
     try {
         // attach the dentist and user
         req.body.dentist = req.params.dentistId;
@@ -189,6 +194,11 @@ exports.addAppointment = async (req, res, next) => {
 //@route PUT /api/v1/appointments/:id
 //@access Private
 exports.updateAppointment = async (req, res, next) => {
+    let { apptDate } = req.body;
+    // Client may send ISO string without milliseconds (e.g. "2024-06-30T10:00:00Z"), but Mongoose expects milliseconds (e.g. "2024-06-30T10:00:00.000Z")
+    if (apptDate && apptDate.endsWith('Z') && !apptDate.includes('.')) {
+        req.body.apptDate = apptDate.replace(/(\d{3}Z)$/, ".$1");
+    }
     try {
         let appointment = await Appointment.findById(req.params.id);
 
