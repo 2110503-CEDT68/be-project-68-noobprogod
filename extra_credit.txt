@@ -1,0 +1,4 @@
+1. ห้ามจองซ้ำ DateTime & Dentist 
+2. ห้ามจองล่วงหน้าเกิน 2 สัปดาห์
+3. จำกัดให้จองได้แค่ในเวลาทำการ 09.00-17.00 น. เวลาไทย
+4. เพิ่ม attribute: bookingLimitPerDay ให้ dentist โดยให้ require:false
